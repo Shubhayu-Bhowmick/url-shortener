@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { urls } from "@/lib/schema";
 const { eq } = require('drizzle-orm');
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 
 export async function GET(request, { params }) {
     const { shortUrl } = params;
@@ -24,18 +25,18 @@ export async function GET(request, { params }) {
                     .where(eq(urls.id, foundUrl.id));
 
                 // Return the original URL as a JSON response
-                return NextResponse.json({ originalUrl: foundUrl.originalUrl });
+                return NextResponse.json({ originalUrl: foundUrl.originalUrl }, { headers: { 'Cache-Control': 'no-store' }});
             } else {
                 // If the URL is inactive, return a 403 response
-                return NextResponse.json({ error: "URL is inactive" }, { status: 403 });
+                return NextResponse.json({ error: "URL is inactive" }, { status: 403 }, { headers: { 'Cache-Control': 'no-store' }});
             }
         } else {
             // If no matching URL is found, return a 404 response
-            return NextResponse.json({ error: "URL not found" }, { status: 404 });
+            return NextResponse.json({ error: "URL not found" }, { status: 404 }, { headers: { 'Cache-Control': 'no-store' }});
         }
     } catch (error) {
         // Handle any errors that occur during the request
         console.error('Database query error:', error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 }, { headers: { 'Cache-Control': 'no-store' }});
     }
 }

@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { urls } from '@/lib/schema';
 const { eq } = require('drizzle-orm');
 
+export const revalidate = 0;
+
 // The URL shortener logic
 function idToShortURL(id) {
     const map = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -43,7 +45,7 @@ async function storeUrl(originalUrl, shortUrl) {
 
 export async function GET() {
     const allUrls = await db.select().from(urls);
-    return NextResponse.json(allUrls);
+    return NextResponse.json(allUrls, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 
@@ -51,7 +53,7 @@ export async function POST(request) {
     const { original_url } = await request.json();
     const shortURL = idToShortURL((await db.select().from(urls)).length + 1);
     const newUrl = await storeUrl(original_url, shortURL);
-    return NextResponse.json({ message: "URL shortened successfully!", newUrl });
+    return NextResponse.json({ message: "URL shortened successfully!", newUrl }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 
@@ -69,16 +71,17 @@ export async function PATCH(request) {
             .returning();
 
         if (updatedUrl.length === 0) {
-            return NextResponse.json({ error: "URL not found" }, { status: 404 });
+            return NextResponse.json({ error: "URL not found" }, { status: 404 }, { headers: { 'Cache-Control': 'no-store' }});
         }
 
         return NextResponse.json({ 
             message: "URL status updated successfully", 
             updatedUrl: updatedUrl[0] 
-        });
+        }
+    );
     } catch (error) {
         console.error('Error updating URL status:', error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 }, { headers: { 'Cache-Control': 'no-store' }});
     }
 }
 
@@ -87,7 +90,7 @@ export async function DELETE(request) {
     const id = searchParams.get('id');
 
     if (!id) {
-        return NextResponse.json({ error: "ID is required" }, { status: 400 });
+        return NextResponse.json({ error: "ID is required" }, { status: 400 }, { headers: { 'Cache-Control': 'no-store' }});
     }
 
     try {
@@ -96,15 +99,17 @@ export async function DELETE(request) {
             .returning();
 
         if (deletedUrl.length === 0) {
-            return NextResponse.json({ error: "URL not found" }, { status: 404 });
+            return NextResponse.json({ error: "URL not found" }, { status: 404 }, { headers: { 'Cache-Control': 'no-store' }});
         }
 
         return NextResponse.json({ 
             message: "URL deleted successfully", 
             deletedUrl: deletedUrl[0] 
-        });
+        },
+        { headers: { 'Cache-Control': 'no-store' }}
+    );
     } catch (error) {
         console.error('Error deleting URL:', error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 }, { headers: { 'Cache-Control': 'no-store' }});
     }
 }

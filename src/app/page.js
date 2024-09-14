@@ -50,7 +50,7 @@ export default function Component() {
   /** this fetches all the urls */
 
   async function fetchUrls() {
-    const response = await fetch("/api/shortener")
+    const response = await fetch("/api/shortener", { cache: 'no-store' })
     if (response.ok) {
       const data = await response.json()
       setUrls(data)
@@ -63,7 +63,8 @@ export default function Component() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ original_url: url })
+      body: JSON.stringify({ original_url: url }),
+      cache: 'no-store' 
     })
 
     if (response.ok) {
@@ -89,7 +90,9 @@ export default function Component() {
           id: selectedLink.id,
           status: selectedLink.status === 'active' ? 'inactive' : 'active'
         }),
+        cache: 'no-store'
       });
+
   
       if (!response.ok) {
         throw new Error('Failed to update status');
@@ -239,21 +242,24 @@ export default function Component() {
         <div className="lg:hidden space-y-4 max-w-3xl mx-auto">
           {urls.map((row) => (
             <div key={row.id} className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-20 rounded-lg p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex bg-slate-400 rounded-md bg-opacity-20">
+                <div className="flex items-center w-full justify-between pl-3 pr-1 py-1">
                   <span className="font-medium text-sm md:text-lg">{row.shortUrl}</span>
                   <CopyButton text={row.shortUrl} />
                 </div>
-                <ShortUrlQRCode url={row.shortUrl} />
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span title={row.originalUrl} className="truncate max-w-[200px] sm:max-w-[300px]">
+              
+              <div className="flex justify-between items-center gap-2 text-sm">
+                <div className='flex flex-col gap-2'>
+                <span title={row.originalUrl} className="truncate text-gray-300 max-w-[200px] sm:max-w-[300px]">
                   {truncateUrl(row.originalUrl, 30)}
                 </span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
                 <span>{row.clicks} clicks</span>
-                <div className="flex items-center gap-2">
+                </div>
+                <ShortUrlQRCode url={row.shortUrl} />
+              </div>
+
+              <div className="flex justify-between text-sm">
                   <Button
                     onClick={() => handleStatusClick(row)}
                     className={`px-3 py-1 text-xs md:text-sm ${
@@ -264,17 +270,21 @@ export default function Component() {
                   >
                     {row.status}
                   </Button>
+
+                  <div className='flex justify-between gap-2'>
+                  <div className="text-xs text-gray-400 flex flex-col justify-center">{row.createdAt}</div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(row.id)}
                     className="text-red-500 hover:text-red-700"
                   >
-                    <Trash2 size={16} />
+                  <Trash2 size={16} />
                   </Button>
-                </div>
+                  </div>
+
+                
               </div>
-              <div className="text-xs text-gray-400">{row.createdAt}</div>
             </div>
           ))}
         </div>
